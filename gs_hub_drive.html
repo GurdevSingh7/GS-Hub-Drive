@@ -1,0 +1,1126 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GS HUB & DRIVE - CEO Gurdev Singh</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        darkBase: '#07070a',
+                        surfaceDark: '#11111a',
+                        cardDark: 'rgba(20, 20, 32, 0.75)',
+                        accentRed: '#ff0055',
+                        neonCyan: '#00f3ff',
+                        neonPurple: '#9d00ff',
+                        metallic: '#e2e8f0'
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'Segoe UI', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- JSZip for Folder Zip Downloads -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        body {
+            background-color: #07070a;
+            color: #e2e8f0;
+            overflow-x: hidden;
+        }
+
+        .glass {
+            background: rgba(17, 17, 26, 0.75);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .glass-nav {
+            background: rgba(10, 10, 15, 0.9);
+            backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .card-hover {
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px) scale(1.01);
+            border-color: rgba(0, 243, 255, 0.5);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.8), 0 0 25px rgba(0, 243, 255, 0.2);
+        }
+
+        .glow-cyan {
+            box-shadow: 0 0 18px rgba(0, 243, 255, 0.4);
+        }
+
+        .glow-red {
+            box-shadow: 0 0 18px rgba(255, 0, 85, 0.4);
+        }
+
+        ::-webkit-scrollbar {
+            width: 7px;
+            height: 7px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #07070a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1e1e2e;
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #00f3ff;
+        }
+    </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans">
+
+    <!-- Top Navigation -->
+    <header class="glass-nav sticky top-0 z-40 px-4 md:px-8 py-3.5 flex items-center justify-between">
+        <div class="flex items-center gap-3 cursor-pointer" onclick="navigateToFolder(null)">
+            <div class="w-10 h-10 rounded-2xl bg-gradient-to-tr from-accentRed via-neonPurple to-neonCyan flex items-center justify-center font-black text-xl text-white shadow-lg glow-cyan">
+                GS
+            </div>
+            <div>
+                <h1 class="text-xl font-extrabold tracking-wider bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+                    GS HUB & DRIVE
+                </h1>
+                <p class="text-[10px] text-neonCyan font-mono tracking-widest uppercase">CEO GURDEV SINGH</p>
+            </div>
+        </div>
+
+        <!-- Account Badge & Actions -->
+        <div class="flex items-center gap-3">
+            <button onclick="toggleModal('folderModal')" class="hidden sm:flex bg-slate-900 border border-slate-700 hover:border-neonCyan text-slate-200 text-xs font-bold px-3.5 py-2 rounded-xl items-center gap-2 transition">
+                <i class="fa-solid fa-folder-plus text-neonCyan"></i> New Folder
+            </button>
+            <button onclick="toggleModal('uploadModal')" class="bg-gradient-to-r from-accentRed to-pink-600 hover:from-pink-600 hover:to-accentRed text-white text-xs font-bold px-4 py-2 rounded-xl flex items-center gap-2 transition transform hover:scale-105 shadow-md glow-red">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload
+            </button>
+
+            <!-- User Switcher Badge -->
+            <div id="userBadge" class="relative">
+                <!-- Injected dynamically -->
+            </div>
+        </div>
+    </header>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="fixed top-20 right-6 z-50 bg-slate-900 border border-neonCyan text-white text-xs px-4 py-3 rounded-2xl shadow-2xl flex items-center gap-3 transform translate-x-80 transition-transform duration-300">
+        <i id="toastIcon" class="fa-solid fa-circle-check text-neonCyan text-base"></i>
+        <span id="toastMsg">Action executed successfully.</span>
+    </div>
+
+    <!-- App Main Layout -->
+    <div class="flex-1 flex flex-col md:flex-row max-w-[1600px] w-full mx-auto px-4 md:px-8 py-6 gap-6">
+
+        <!-- Left Sidebar Navigator -->
+        <aside class="w-full md:w-64 flex-shrink-0 space-y-6">
+            <div class="glass rounded-3xl p-5 border border-slate-800 space-y-4">
+                <div class="flex items-center justify-between text-xs font-bold text-slate-400 uppercase tracking-wider">
+                    <span>Navigation</span>
+                </div>
+                <nav class="space-y-1.5 text-xs font-semibold text-slate-300">
+                    <button onclick="setCategoryFilter('all')" class="nav-filter active w-full text-left px-3.5 py-2.5 rounded-xl flex items-center justify-between hover:bg-slate-800/80 transition" data-cat="all">
+                        <span class="flex items-center gap-2.5"><i class="fa-solid fa-hard-drive text-neonCyan"></i> All Storage</span>
+                        <span id="cntAll" class="text-[10px] bg-slate-900 px-2 py-0.5 rounded-md font-mono text-slate-400">0</span>
+                    </button>
+                    <button onclick="setCategoryFilter('apk')" class="nav-filter w-full text-left px-3.5 py-2.5 rounded-xl flex items-center justify-between hover:bg-slate-800/80 transition" data-cat="apk">
+                        <span class="flex items-center gap-2.5"><i class="fa-brands fa-android text-green-400"></i> Android APKs</span>
+                        <span id="cntApk" class="text-[10px] bg-slate-900 px-2 py-0.5 rounded-md font-mono text-slate-400">0</span>
+                    </button>
+                    <button onclick="setCategoryFilter('photo')" class="nav-filter w-full text-left px-3.5 py-2.5 rounded-xl flex items-center justify-between hover:bg-slate-800/80 transition" data-cat="photo">
+                        <span class="flex items-center gap-2.5"><i class="fa-solid fa-image text-pink-400"></i> Photos & Art</span>
+                        <span id="cntPhoto" class="text-[10px] bg-slate-900 px-2 py-0.5 rounded-md font-mono text-slate-400">0</span>
+                    </button>
+                    <button onclick="setCategoryFilter('video')" class="nav-filter w-full text-left px-3.5 py-2.5 rounded-xl flex items-center justify-between hover:bg-slate-800/80 transition" data-cat="video">
+                        <span class="flex items-center gap-2.5"><i class="fa-solid fa-video text-purple-400"></i> Videos & Movies</span>
+                        <span id="cntVideo" class="text-[10px] bg-slate-900 px-2 py-0.5 rounded-md font-mono text-slate-400">0</span>
+                    </button>
+                    <button onclick="setCategoryFilter('code')" class="nav-filter w-full text-left px-3.5 py-2.5 rounded-xl flex items-center justify-between hover:bg-slate-800/80 transition" data-cat="code">
+                        <span class="flex items-center gap-2.5"><i class="fa-solid fa-code text-cyan-400"></i> Code & Scripts</span>
+                        <span id="cntCode" class="text-[10px] bg-slate-900 px-2 py-0.5 rounded-md font-mono text-slate-400">0</span>
+                    </button>
+                    <button onclick="setCategoryFilter('doc')" class="nav-filter w-full text-left px-3.5 py-2.5 rounded-xl flex items-center justify-between hover:bg-slate-800/80 transition" data-cat="doc">
+                        <span class="flex items-center gap-2.5"><i class="fa-solid fa-file-lines text-yellow-400"></i> Documents</span>
+                        <span id="cntDoc" class="text-[10px] bg-slate-900 px-2 py-0.5 rounded-md font-mono text-slate-400">0</span>
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Storage Capacity Bar -->
+            <div class="glass rounded-3xl p-5 border border-slate-800 space-y-3">
+                <div class="flex items-center justify-between text-xs font-bold">
+                    <span class="text-white flex items-center gap-2"><i class="fa-solid fa-database text-neonCyan"></i> Drive Usage</span>
+                    <span id="storagePctText" class="text-neonCyan font-mono">0%</span>
+                </div>
+                <div class="w-full bg-slate-900 rounded-full h-2.5 overflow-hidden border border-slate-800">
+                    <div id="storageBar" class="bg-gradient-to-r from-neonCyan via-purple-500 to-accentRed h-full w-0 transition-all duration-500"></div>
+                </div>
+                <p id="storageDetails" class="text-[10px] text-slate-400 font-mono text-center">Calculating IndexedDB quota...</p>
+            </div>
+
+            <!-- CEO Profile Snippet -->
+            <div class="glass rounded-3xl p-5 border border-slate-800 text-center space-y-3">
+                <div class="w-16 h-16 rounded-2xl mx-auto bg-gradient-to-tr from-accentRed to-neonCyan p-0.5 shadow-lg">
+                    <div class="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
+                        <i class="fa-solid fa-user-shield text-2xl text-neonCyan"></i>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-sm font-extrabold text-white">CEO Gurdev Singh</h4>
+                    <p class="text-[10px] text-slate-400">GS Platform System Owner</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Explorer Container -->
+        <main class="flex-1 space-y-6">
+
+            <!-- Search & Actions Bar -->
+            <div class="flex flex-col md:flex-row gap-4 items-center justify-between">
+                <div class="relative w-full md:w-96">
+                    <i class="fa-solid fa-magnifying-glass absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 text-sm"></i>
+                    <input type="text" id="searchInput" oninput="renderWorkspace()" placeholder="Search files, folders, or extensions..." class="w-full bg-slate-900/90 border border-slate-800 rounded-2xl py-3 pl-11 pr-4 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-neonCyan transition">
+                </div>
+
+                <div class="flex items-center gap-2 w-full md:w-auto justify-end">
+                    <button onclick="toggleModal('folderModal')" class="sm:hidden bg-slate-900 border border-slate-700 text-slate-200 text-xs font-bold px-3.5 py-2.5 rounded-xl flex items-center gap-2">
+                        <i class="fa-solid fa-folder-plus text-neonCyan"></i> Folder
+                    </button>
+                    <button onclick="toggleViewMode('grid')" id="btnViewGrid" class="p-2.5 glass rounded-xl text-neonCyan border-neonCyan/50" title="Grid View">
+                        <i class="fa-solid fa-border-all"></i>
+                    </button>
+                    <button onclick="toggleViewMode('list')" id="btnViewList" class="p-2.5 glass rounded-xl text-slate-400 border-slate-800" title="List View">
+                        <i class="fa-solid fa-list"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Breadcrumb Path Directory Navigation -->
+            <div class="glass rounded-2xl px-5 py-3 border border-slate-800 flex items-center justify-between overflow-x-auto">
+                <div id="breadcrumbs" class="flex items-center gap-2 text-xs font-medium text-slate-300">
+                    <!-- Dynamic Breadcrumbs -->
+                </div>
+                <div id="folderActions" class="hidden flex items-center gap-2">
+                    <button onclick="downloadCurrentFolderZip()" class="text-xs bg-neonCyan/10 hover:bg-neonCyan/20 text-neonCyan border border-neonCyan/30 px-3 py-1.5 rounded-lg flex items-center gap-1.5 font-bold transition">
+                        <i class="fa-solid fa-file-zipper"></i> Zip & Download Folder
+                    </button>
+                </div>
+            </div>
+
+            <!-- Folders Workspace Grid -->
+            <div id="foldersSection" class="space-y-3">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-folder text-yellow-400"></i> Folders
+                </h3>
+                <div id="foldersGrid" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
+                    <!-- Dynamic Folders -->
+                </div>
+            </div>
+
+            <!-- Files Workspace Grid / List -->
+            <div class="space-y-3">
+                <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
+                    <i class="fa-solid fa-file text-neonCyan"></i> Files
+                </h3>
+                <div id="filesContainer" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    <!-- Dynamic Files -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL: LOGIN / REGISTER -->
+    <div id="authModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass max-w-md w-full rounded-3xl p-6 md:p-8 border border-slate-800 space-y-6 relative shadow-2xl">
+            <button onclick="toggleModal('authModal')" class="absolute top-5 right-5 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="text-center space-y-1">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-tr from-accentRed to-neonCyan mx-auto flex items-center justify-center font-black text-xl text-white shadow-lg glow-cyan mb-2">
+                    GS
+                </div>
+                <h3 class="text-xl font-black text-white" id="authTitle">User Authentication</h3>
+                <p class="text-xs text-slate-400">Login or create a unique account to store private files.</p>
+            </div>
+
+            <form id="authForm" onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Username *</label>
+                    <input type="text" id="authUsername" required placeholder="Choose a username" class="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-white focus:outline-none focus:border-neonCyan">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Password *</label>
+                    <input type="password" id="authPassword" required placeholder="Enter password" class="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-white focus:outline-none focus:border-neonCyan">
+                </div>
+
+                <div class="pt-2 flex flex-col gap-2">
+                    <button type="submit" id="authSubmitBtn" class="w-full bg-neonCyan text-black font-bold text-xs py-3 rounded-xl hover:bg-white transition shadow-lg glow-cyan">
+                        Login / Sign Up
+                    </button>
+                    <button type="button" onclick="continueAsGuest()" class="w-full bg-slate-900 text-slate-300 font-semibold text-xs py-3 rounded-xl border border-slate-800 hover:bg-slate-800 transition">
+                        Continue as Guest Mode
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: UPLOAD FILE -->
+    <div id="uploadModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass max-w-lg w-full rounded-3xl p-6 md:p-8 border border-slate-800 space-y-6 relative max-h-[90vh] overflow-y-auto">
+            <button onclick="toggleModal('uploadModal')" class="absolute top-5 right-5 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <div class="space-y-1">
+                <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                    <i class="fa-solid fa-cloud-arrow-up text-neonCyan"></i> Upload File
+                </h3>
+                <p class="text-xs text-slate-400">Select any file (APK, Photo, Video, Zip, Code, Document) to upload.</p>
+            </div>
+
+            <form id="uploadForm" onsubmit="handleFileUpload(event)" class="space-y-4">
+                <div class="border-2 border-dashed border-slate-700 hover:border-neonCyan rounded-2xl p-6 text-center bg-slate-900/50 transition cursor-pointer" onclick="document.getElementById('fileInput').click()">
+                    <input type="file" id="fileInput" required onchange="handleFileSelect(event)" class="hidden">
+                    <i class="fa-solid fa-file-circle-plus text-4xl text-neonCyan mb-2 block"></i>
+                    <p id="fileNameDisplay" class="text-xs font-semibold text-slate-200">Click to browse or drop any file here</p>
+                    <p id="fileDetailsDisplay" class="text-[10px] text-slate-500 mt-1">Supports APK, PNG, JPG, MP4, ZIP, PDF, JS, PY, etc.</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">File Display Title *</label>
+                    <input type="text" id="fileTitle" required placeholder="Title or name" class="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-white focus:outline-none focus:border-neonCyan">
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Target Folder</label>
+                        <select id="targetFolderSelect" class="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-white focus:outline-none focus:border-neonCyan">
+                            <!-- Injected dynamically -->
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-300 mb-1">Category</label>
+                        <select id="fileCategorySelect" class="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-white focus:outline-none focus:border-neonCyan">
+                            <option value="auto">Auto Detect</option>
+                            <option value="apk">Android APK</option>
+                            <option value="photo">Photo / Graphic</option>
+                            <option value="video">Video / Movie</option>
+                            <option value="code">Source Code</option>
+                            <option value="doc">Document</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Description / Notes</label>
+                    <textarea id="fileDesc" rows="2" placeholder="Add optional details..." class="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-white focus:outline-none focus:border-neonCyan"></textarea>
+                </div>
+
+                <div id="uploadProgress" class="hidden space-y-1">
+                    <div class="flex justify-between text-[10px] text-slate-400">
+                        <span>Storing in IndexedDB...</span>
+                        <span id="uploadPct">0%</span>
+                    </div>
+                    <div class="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
+                        <div id="uploadProgressBar" class="bg-neonCyan h-full w-0 transition-all duration-200"></div>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <button type="submit" id="uploadSubmitBtn" class="w-full bg-gradient-to-r from-neonCyan to-blue-600 text-black font-bold text-xs py-3 rounded-xl hover:opacity-90 transition shadow-lg glow-cyan flex items-center justify-center gap-2">
+                        <i class="fa-solid fa-file-export"></i> Upload to Drive
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: CREATE FOLDER -->
+    <div id="folderModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass max-w-sm w-full rounded-3xl p-6 border border-slate-800 space-y-5 relative">
+            <button onclick="toggleModal('folderModal')" class="absolute top-5 right-5 text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+
+            <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-folder-plus text-yellow-400"></i> Create Folder
+            </h3>
+
+            <form onsubmit="handleCreateFolder(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-300 mb-1">Folder Name *</label>
+                    <input type="text" id="folderNameInput" required placeholder="e.g. My Apps, Projects, Media" class="w-full bg-slate-900 border border-slate-800 rounded-xl py-2.5 px-3.5 text-xs text-white focus:outline-none focus:border-neonCyan">
+                </div>
+
+                <button type="submit" class="w-full bg-yellow-400 text-black font-bold text-xs py-2.5 rounded-xl hover:bg-yellow-300 transition shadow-lg">
+                    Create Folder
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: LIVE PREVIEW & FILE DETAILS -->
+    <div id="previewModal" class="fixed inset-0 bg-black/90 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden">
+        <div class="glass max-w-3xl w-full rounded-3xl p-6 md:p-8 border border-slate-800 space-y-5 relative max-h-[90vh] flex flex-col">
+            <button onclick="toggleModal('previewModal')" class="absolute top-5 right-5 text-slate-400 hover:text-white z-10">
+                <i class="fa-solid fa-xmark text-xl"></i>
+            </button>
+
+            <div class="flex items-center gap-3">
+                <div id="previewIcon" class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-neonCyan text-xl">
+                    <i class="fa-solid fa-file"></i>
+                </div>
+                <div>
+                    <h3 id="previewTitle" class="text-base font-bold text-white leading-tight">File Title</h3>
+                    <p id="previewMeta" class="text-xs text-slate-400 font-mono">filename.ext • 0 KB</p>
+                </div>
+            </div>
+
+            <!-- Preview Display Box -->
+            <div id="previewBox" class="flex-1 min-h-[250px] max-h-[450px] bg-slate-950 rounded-2xl border border-slate-800/80 overflow-hidden flex items-center justify-center p-4">
+                <!-- Media/Code preview rendered dynamically -->
+            </div>
+
+            <!-- Action Toolbar -->
+            <div class="flex items-center justify-between pt-2">
+                <div class="text-[11px] text-slate-400 font-mono" id="previewUploader">
+                    Uploaded by: Guest
+                </div>
+                <div class="flex items-center gap-3">
+                    <button id="btnDownloadPreview" class="bg-neonCyan text-black font-bold px-4 py-2 rounded-xl text-xs flex items-center gap-2 hover:bg-white transition">
+                        <i class="fa-solid fa-download"></i> Download Binary
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Application Script Engine -->
+    <script>
+        // Database Constants
+        const DB_NAME = 'GS_HubDrive_Database';
+        const DB_VERSION = 1;
+        let db = null;
+
+        // Session State
+        let currentUser = localStorage.getItem('gs_user') || 'Guest';
+        let currentFolderId = null; // Root folder
+        let selectedFile = null;
+        let activeCategory = 'all';
+        let viewMode = 'grid'; // grid or list
+
+        // IndexedDB Initialization
+        function initDB() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (e) => {
+                    const database = e.target.result;
+                    if (!database.objectStoreNames.contains('users')) {
+                        database.createObjectStore('users', { keyPath: 'username' });
+                    }
+                    if (!database.objectStoreNames.contains('folders')) {
+                        database.createObjectStore('folders', { keyPath: 'id' });
+                    }
+                    if (!database.objectStoreNames.contains('files')) {
+                        database.createObjectStore('files', { keyPath: 'id' });
+                    }
+                };
+                request.onsuccess = (e) => {
+                    db = e.target.result;
+                    resolve(db);
+                };
+                request.onerror = (e) => reject(e);
+            });
+        }
+
+        // --- AUTHENTICATION MODULE ---
+        function renderUserBadge() {
+            const badge = document.getElementById('userBadge');
+            if (currentUser === 'Guest') {
+                badge.innerHTML = `
+                    <button onclick="toggleModal('authModal')" class="bg-slate-900 border border-slate-800 hover:border-neonCyan px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-300 flex items-center gap-2 transition">
+                        <i class="fa-solid fa-user-circle text-neonCyan"></i> Guest Mode (Login)
+                    </button>
+                `;
+            } else {
+                badge.innerHTML = `
+                    <div class="flex items-center gap-2 bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-200">
+                        <i class="fa-solid fa-circle-user text-green-400"></i> ${currentUser}
+                        <button onclick="logoutUser()" class="text-slate-500 hover:text-accentRed ml-1" title="Logout">
+                            <i class="fa-solid fa-right-from-bracket"></i>
+                        </button>
+                    </div>
+                `;
+            }
+        }
+
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const username = document.getElementById('authUsername').value.trim();
+            const password = document.getElementById('authPassword').value.trim();
+
+            if (!username || !password) return;
+
+            const tx = db.transaction('users', 'readwrite');
+            const store = tx.objectStore('users');
+            const req = store.get(username);
+
+            req.onsuccess = () => {
+                const existingUser = req.result;
+                if (existingUser) {
+                    if (existingUser.password === password) {
+                        currentUser = username;
+                        localStorage.setItem('gs_user', currentUser);
+                        showToast(`Welcome back, ${currentUser}!`);
+                        toggleModal('authModal');
+                        renderUserBadge();
+                        renderWorkspace();
+                    } else {
+                        showToast("Incorrect password!", true);
+                    }
+                } else {
+                    // Create new user account
+                    store.put({ username: username, password: password, createdAt: Date.now() });
+                    currentUser = username;
+                    localStorage.setItem('gs_user', currentUser);
+                    showToast(`Account "${currentUser}" created successfully!`);
+                    toggleModal('authModal');
+                    renderUserBadge();
+                    renderWorkspace();
+                }
+            };
+        }
+
+        function continueAsGuest() {
+            currentUser = 'Guest';
+            localStorage.setItem('gs_user', 'Guest');
+            toggleModal('authModal');
+            renderUserBadge();
+            renderWorkspace();
+            showToast("Operating in Guest Mode.");
+        }
+
+        function logoutUser() {
+            currentUser = 'Guest';
+            localStorage.setItem('gs_user', 'Guest');
+            renderUserBadge();
+            renderWorkspace();
+            showToast("Logged out to Guest Mode.");
+        }
+
+        // --- FOLDER MANAGEMENT ENGINE ---
+        function handleCreateFolder(e) {
+            e.preventDefault();
+            const name = document.getElementById('folderNameInput').value.trim();
+            if (!name) return;
+
+            const folderRecord = {
+                id: 'folder_' + Date.now(),
+                name: name,
+                parentId: currentFolderId,
+                owner: currentUser,
+                createdAt: Date.now()
+            };
+
+            const tx = db.transaction('folders', 'readwrite');
+            tx.objectStore('folders').put(folderRecord);
+            tx.oncomplete = () => {
+                showToast(`Folder "${name}" created!`);
+                document.getElementById('folderNameInput').value = '';
+                toggleModal('folderModal');
+                renderWorkspace();
+            };
+        }
+
+        function navigateToFolder(folderId) {
+            currentFolderId = folderId;
+            renderWorkspace();
+        }
+
+        async function getBreadcrumbPath(folderId) {
+            const crumbs = [{ id: null, name: 'Root Drive' }];
+            if (!folderId) return crumbs;
+
+            let currId = folderId;
+            const tx = db.transaction('folders', 'readonly');
+            const store = tx.objectStore('folders');
+
+            while (currId) {
+                const folder = await new Promise(res => {
+                    const req = store.get(currId);
+                    req.onsuccess = () => res(req.result);
+                });
+                if (folder) {
+                    crumbs.splice(1, 0, { id: folder.id, name: folder.name });
+                    currId = folder.parentId;
+                } else {
+                    break;
+                }
+            }
+            return crumbs;
+        }
+
+        async function renderBreadcrumbs() {
+            const crumbs = await getBreadcrumbPath(currentFolderId);
+            const container = document.getElementById('breadcrumbs');
+            container.innerHTML = '';
+
+            crumbs.forEach((crumb, index) => {
+                const isLast = index === crumbs.length - 1;
+                const btn = document.createElement('button');
+                btn.className = `hover:text-neonCyan transition flex items-center gap-1 ${isLast ? 'text-neonCyan font-bold' : 'text-slate-400'}`;
+                btn.innerHTML = index === 0 ? `<i class="fa-solid fa-house"></i> Root` : crumb.name;
+                btn.onclick = () => navigateToFolder(crumb.id);
+                container.appendChild(btn);
+
+                if (!isLast) {
+                    const sep = document.createElement('span');
+                    sep.className = 'text-slate-600';
+                    sep.innerText = '/';
+                    container.appendChild(sep);
+                }
+            });
+
+            // Toggle folder zip action button
+            const folderActions = document.getElementById('folderActions');
+            if (currentFolderId) {
+                folderActions.classList.remove('hidden');
+            } else {
+                folderActions.classList.add('hidden');
+            }
+        }
+
+        // --- FILE UPLOAD ENGINE ---
+        function handleFileSelect(e) {
+            const files = e.target.files;
+            if (files && files.length > 0) {
+                selectedFile = files[0];
+                document.getElementById('fileNameDisplay').innerText = selectedFile.name;
+                document.getElementById('fileDetailsDisplay').innerText = `Type: ${selectedFile.type || 'Binary'} | Size: ${formatBytes(selectedFile.size)}`;
+                document.getElementById('fileTitle').value = selectedFile.name.replace(/\.[^/.]+$/, "");
+            }
+        }
+
+        function detectCategory(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            if (ext === 'apk') return 'apk';
+            if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext)) return 'photo';
+            if (['mp4', 'mkv', 'webm', 'avi', 'mov'].includes(ext)) return 'video';
+            if (['js', 'py', 'kt', 'java', 'html', 'css', 'ts', 'json', 'cpp', 'zip', 'rar'].includes(ext)) return 'code';
+            return 'doc';
+        }
+
+        async function handleFileUpload(e) {
+            e.preventDefault();
+            if (!selectedFile) {
+                showToast("Please select a file first!", true);
+                return;
+            }
+
+            const title = document.getElementById('fileTitle').value.trim();
+            const targetFolder = document.getElementById('targetFolderSelect').value || null;
+            let category = document.getElementById('fileCategorySelect').value;
+            const desc = document.getElementById('fileDesc').value.trim();
+
+            if (category === 'auto') {
+                category = detectCategory(selectedFile);
+            }
+
+            const submitBtn = document.getElementById('uploadSubmitBtn');
+            const progressBox = document.getElementById('uploadProgress');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const progressPct = document.getElementById('uploadPct');
+
+            submitBtn.disabled = true;
+            progressBox.classList.remove('hidden');
+
+            try {
+                const arrayBuffer = await readFileAsArrayBuffer(selectedFile, (pct) => {
+                    progressBar.style.width = `${pct}%`;
+                    progressPct.innerText = `${pct}%`;
+                });
+
+                const fileBlob = new Blob([arrayBuffer], { type: selectedFile.type || 'application/octet-stream' });
+
+                const fileRecord = {
+                    id: 'file_' + Date.now(),
+                    title: title,
+                    fileName: selectedFile.name,
+                    fileBlob: fileBlob,
+                    fileType: selectedFile.type || 'application/octet-stream',
+                    category: category,
+                    folderId: targetFolder === 'root' ? null : targetFolder,
+                    owner: currentUser,
+                    size: formatBytes(selectedFile.size),
+                    bytesSize: selectedFile.size,
+                    desc: desc,
+                    uploadedAt: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+                };
+
+                const tx = db.transaction('files', 'readwrite');
+                tx.objectStore('files').put(fileRecord);
+                
+                tx.oncomplete = () => {
+                    showToast(`"${selectedFile.name}" uploaded to Drive!`);
+                    document.getElementById('uploadForm').reset();
+                    selectedFile = null;
+                    document.getElementById('fileNameDisplay').innerText = "Click to browse or drop any file here";
+                    progressBox.classList.add('hidden');
+                    submitBtn.disabled = false;
+                    toggleModal('uploadModal');
+                    renderWorkspace();
+                    calculateStorageQuota();
+                };
+            } catch (err) {
+                console.error(err);
+                showToast("Failed to upload file to browser storage.", true);
+                submitBtn.disabled = false;
+                progressBox.classList.add('hidden');
+            }
+        }
+
+        function readFileAsArrayBuffer(file, onProgress) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onprogress = (e) => {
+                    if (e.lengthComputable) {
+                        onProgress(Math.round((e.loaded / e.total) * 100));
+                    }
+                };
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = (err) => reject(err);
+                reader.readAsArrayBuffer(file);
+            });
+        }
+
+        // --- RENDER WORKSPACE (FOLDERS & FILES) ---
+        async function renderWorkspace() {
+            renderBreadcrumbs();
+            populateFolderDropdown();
+
+            const searchVal = document.getElementById('searchInput').value.toLowerCase();
+
+            // Fetch Folders & Files
+            const txFolders = db.transaction('folders', 'readonly');
+            const allFolders = await new Promise(res => {
+                const req = txFolders.objectStore('folders').getAll();
+                req.onsuccess = () => res(req.result || []);
+            });
+
+            const txFiles = db.transaction('files', 'readonly');
+            const allFiles = await new Promise(res => {
+                const req = txFiles.objectStore('files').getAll();
+                req.onsuccess = () => res(req.result || []);
+            });
+
+            // Update Sidebar Counters
+            updateCategoryCounters(allFiles);
+
+            // Filter Folders
+            const visibleFolders = allFolders.filter(f => {
+                const matchParent = f.parentId === currentFolderId;
+                const matchSearch = f.name.toLowerCase().includes(searchVal);
+                return matchParent && matchSearch;
+            });
+
+            // Filter Files
+            const visibleFiles = allFiles.filter(f => {
+                const matchParent = searchVal ? true : f.folderId === currentFolderId;
+                const matchCategory = activeCategory === 'all' || f.category === activeCategory;
+                const matchSearch = f.title.toLowerCase().includes(searchVal) || f.fileName.toLowerCase().includes(searchVal);
+                return matchParent && matchCategory && matchSearch;
+            });
+
+            // Render Folders
+            const foldersGrid = document.getElementById('foldersGrid');
+            const foldersSection = document.getElementById('foldersSection');
+            foldersGrid.innerHTML = '';
+
+            if (visibleFolders.length === 0 && activeCategory !== 'all') {
+                foldersSection.classList.add('hidden');
+            } else {
+                foldersSection.classList.remove('hidden');
+                visibleFolders.forEach(folder => {
+                    const el = document.createElement('div');
+                    el.className = 'glass rounded-2xl p-4 border border-slate-800 card-hover cursor-pointer flex items-center justify-between group';
+                    el.innerHTML = `
+                        <div class="flex items-center gap-3 overflow-hidden" onclick="navigateToFolder('${folder.id}')">
+                            <i class="fa-solid fa-folder text-2xl text-yellow-400 flex-shrink-0"></i>
+                            <span class="text-xs font-bold text-white truncate">${folder.name}</span>
+                        </div>
+                        <button onclick="deleteFolder('${folder.id}', '${folder.name}')" class="opacity-0 group-hover:opacity-100 text-slate-500 hover:text-accentRed transition p-1" title="Delete Folder">
+                            <i class="fa-solid fa-trash text-xs"></i>
+                        </button>
+                    `;
+                    foldersGrid.appendChild(el);
+                });
+            }
+
+            // Render Files
+            const filesContainer = document.getElementById('filesContainer');
+            filesContainer.innerHTML = '';
+
+            if (visibleFiles.length === 0 && visibleFolders.length === 0) {
+                filesContainer.innerHTML = `
+                    <div class="col-span-full py-16 text-center text-slate-500 glass rounded-3xl">
+                        <i class="fa-solid fa-folder-open text-5xl mb-3 text-slate-700 block"></i>
+                        <p class="text-sm text-slate-400 font-semibold">No files or folders found here.</p>
+                        <p class="text-xs text-slate-600 mt-1">Upload a file or create a folder to get started.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            visibleFiles.reverse().forEach(file => {
+                const iconInfo = getFileIcon(file);
+                const card = document.createElement('div');
+                
+                if (viewMode === 'grid') {
+                    card.className = 'glass rounded-2xl p-5 border border-slate-800 card-hover flex flex-col justify-between space-y-4';
+                    card.innerHTML = `
+                        <div class="space-y-3">
+                            <div class="flex items-center justify-between">
+                                <div class="w-10 h-10 rounded-xl bg-slate-900 border border-slate-800 flex items-center justify-center text-xl ${iconInfo.color}">
+                                    <i class="${iconInfo.icon}"></i>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <button onclick="previewFile('${file.id}')" class="text-slate-400 hover:text-neonCyan p-1.5" title="Preview / Details">
+                                        <i class="fa-solid fa-eye text-xs"></i>
+                                    </button>
+                                    <button onclick="deleteFile('${file.id}', '${file.title}')" class="text-slate-500 hover:text-accentRed p-1.5" title="Delete">
+                                        <i class="fa-solid fa-trash text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 class="text-sm font-bold text-white truncate" title="${file.title}">${file.title}</h4>
+                                <p class="text-[10px] font-mono text-neonCyan truncate mt-0.5"><i class="fa-solid fa-file"></i> ${file.fileName}</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 pt-2 border-t border-slate-800/80 text-[10px] font-mono text-slate-400">
+                            <div class="flex justify-between">
+                                <span>${file.size}</span>
+                                <span>${file.uploadedAt}</span>
+                            </div>
+                            <button onclick="downloadFile('${file.id}')" class="w-full bg-neonCyan hover:bg-white text-black font-bold py-2 rounded-xl transition flex items-center justify-center gap-2">
+                                <i class="fa-solid fa-download"></i> Download
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    // List View
+                    card.className = 'glass rounded-xl p-3 border border-slate-800 flex items-center justify-between gap-4 hover:border-slate-700 transition';
+                    card.innerHTML = `
+                        <div class="flex items-center gap-3 overflow-hidden">
+                            <div class="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-lg ${iconInfo.color}">
+                                <i class="${iconInfo.icon}"></i>
+                            </div>
+                            <div class="overflow-hidden">
+                                <h4 class="text-xs font-bold text-white truncate">${file.title}</h4>
+                                <p class="text-[10px] font-mono text-slate-400">${file.fileName} • ${file.size}</p>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="previewFile('${file.id}')" class="text-slate-400 hover:text-neonCyan p-1.5">
+                                <i class="fa-solid fa-eye text-xs"></i>
+                            </button>
+                            <button onclick="downloadFile('${file.id}')" class="text-neonCyan hover:text-white p-1.5">
+                                <i class="fa-solid fa-download text-xs"></i>
+                            </button>
+                            <button onclick="deleteFile('${file.id}', '${file.title}')" class="text-slate-500 hover:text-accentRed p-1.5">
+                                <i class="fa-solid fa-trash text-xs"></i>
+                            </button>
+                        </div>
+                    `;
+                }
+                filesContainer.appendChild(card);
+            });
+        }
+
+        function getFileIcon(file) {
+            const ext = file.fileName.split('.').pop().toLowerCase();
+            if (ext === 'apk') return { icon: 'fa-brands fa-android', color: 'text-green-400' };
+            if (['jpg', 'jpeg', 'png', 'webp', 'gif'].includes(ext)) return { icon: 'fa-solid fa-file-image', color: 'text-pink-400' };
+            if (['mp4', 'mkv', 'webm'].includes(ext)) return { icon: 'fa-solid fa-file-video', color: 'text-purple-400' };
+            if (['zip', 'rar', '7z'].includes(ext)) return { icon: 'fa-solid fa-file-zipper', color: 'text-yellow-400' };
+            if (['js', 'py', 'kt', 'java', 'html', 'css'].includes(ext)) return { icon: 'fa-solid fa-file-code', color: 'text-cyan-400' };
+            return { icon: 'fa-solid fa-file-lines', color: 'text-slate-300' };
+        }
+
+        function updateCategoryCounters(allFiles) {
+            document.getElementById('cntAll').innerText = allFiles.length;
+            document.getElementById('cntApk').innerText = allFiles.filter(f => f.category === 'apk').length;
+            document.getElementById('cntPhoto').innerText = allFiles.filter(f => f.category === 'photo').length;
+            document.getElementById('cntVideo').innerText = allFiles.filter(f => f.category === 'video').length;
+            document.getElementById('cntCode').innerText = allFiles.filter(f => f.category === 'code').length;
+            document.getElementById('cntDoc').innerText = allFiles.filter(f => f.category === 'doc').length;
+        }
+
+        async function populateFolderDropdown() {
+            const select = document.getElementById('targetFolderSelect');
+            select.innerHTML = `<option value="root">Root Directory</option>`;
+
+            const tx = db.transaction('folders', 'readonly');
+            const folders = await new Promise(res => {
+                const req = tx.objectStore('folders').getAll();
+                req.onsuccess = () => res(req.result || []);
+            });
+
+            folders.forEach(f => {
+                const opt = document.createElement('option');
+                opt.value = f.id;
+                opt.innerText = f.name;
+                if (f.id === currentFolderId) opt.selected = true;
+                select.appendChild(opt);
+            });
+        }
+
+        // --- DIRECT BINARY DOWNLOAD & PREVIEW ENGINE ---
+        async function downloadFile(id) {
+            const tx = db.transaction('files', 'readonly');
+            const req = tx.objectStore('files').get(id);
+
+            req.onsuccess = () => {
+                const item = req.result;
+                if (!item || !item.fileBlob) {
+                    showToast("Error retrieving file binaries.", true);
+                    return;
+                }
+
+                const url = URL.createObjectURL(item.fileBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = item.fileName || item.title;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                showToast(`Downloading "${item.fileName}"...`);
+            };
+        }
+
+        async function previewFile(id) {
+            const tx = db.transaction('files', 'readonly');
+            const req = tx.objectStore('files').get(id);
+
+            req.onsuccess = async () => {
+                const item = req.result;
+                if (!item) return;
+
+                document.getElementById('previewTitle').innerText = item.title;
+                document.getElementById('previewMeta').innerText = `${item.fileName} • ${item.size}`;
+                document.getElementById('previewUploader').innerText = `Uploaded by: ${item.owner || 'Guest'} (${item.uploadedAt})`;
+
+                const btnDownload = document.getElementById('btnDownloadPreview');
+                btnDownload.onclick = () => downloadFile(item.id);
+
+                const box = document.getElementById('previewBox');
+                box.innerHTML = '';
+
+                const ext = item.fileName.split('.').pop().toLowerCase();
+
+                if (['jpg', 'jpeg', 'png', 'webp', 'gif', 'svg'].includes(ext)) {
+                    const imgUrl = URL.createObjectURL(item.fileBlob);
+                    box.innerHTML = `<img src="${imgUrl}" class="max-h-full max-w-full object-contain rounded-xl shadow-lg" alt="preview">`;
+                } else if (['mp4', 'webm', 'mkv'].includes(ext)) {
+                    const videoUrl = URL.createObjectURL(item.fileBlob);
+                    box.innerHTML = `<video src="${videoUrl}" controls class="max-h-full max-w-full rounded-xl"></video>`;
+                } else if (['mp3', 'wav', 'ogg'].includes(ext)) {
+                    const audioUrl = URL.createObjectURL(item.fileBlob);
+                    box.innerHTML = `<audio src="${audioUrl}" controls class="w-full max-w-md"></audio>`;
+                } else if (['txt', 'js', 'py', 'kt', 'java', 'json', 'html', 'css'].includes(ext)) {
+                    const text = await item.fileBlob.text();
+                    box.innerHTML = `<pre class="text-xs text-neonCyan font-mono overflow-auto w-full h-full p-3 whitespace-pre-wrap">${escapeHtml(text.slice(0, 5000))}</pre>`;
+                } else {
+                    box.innerHTML = `
+                        <div class="text-center space-y-2">
+                            <i class="fa-solid fa-file-circle-check text-5xl text-slate-600"></i>
+                            <p class="text-xs text-slate-400">Preview not available for this binary format.</p>
+                            <p class="text-xs font-mono text-neonCyan">${item.fileName}</p>
+                        </div>
+                    `;
+                }
+
+                toggleModal('previewModal');
+            };
+        }
+
+        // --- DOWNLOAD ENTIRE FOLDER AS ZIP ---
+        async function downloadCurrentFolderZip() {
+            if (!currentFolderId) return;
+
+            showToast("Zipping folder files...");
+            const zip = new JSZip();
+
+            // Fetch current folder record
+            const txFolder = db.transaction('folders', 'readonly');
+            const folderRecord = await new Promise(res => {
+                const req = txFolder.objectStore('folders').get(currentFolderId);
+                req.onsuccess = () => res(req.result);
+            });
+
+            const folderName = folderRecord ? folderRecord.name : 'GS_Folder';
+
+            // Fetch files inside folder
+            const txFiles = db.transaction('files', 'readonly');
+            const allFiles = await new Promise(res => {
+                const req = txFiles.objectStore('files').getAll();
+                req.onsuccess = () => res(req.result || []);
+            });
+
+            const folderFiles = allFiles.filter(f => f.folderId === currentFolderId);
+
+            if (folderFiles.length === 0) {
+                showToast("Folder is empty!", true);
+                return;
+            }
+
+            folderFiles.forEach(file => {
+                zip.file(file.fileName, file.fileBlob);
+            });
+
+            const content = await zip.generateAsync({ type: 'blob' });
+            const url = URL.createObjectURL(content);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${folderName}.zip`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+
+            showToast(`Downloaded "${folderName}.zip"!`);
+        }
+
+        // --- DELETE OPERATIONS ---
+        async function deleteFile(id, title) {
+            if (confirm(`Delete file "${title}" permanently?`)) {
+                const tx = db.transaction('files', 'readwrite');
+                tx.objectStore('files').delete(id);
+                tx.oncomplete = () => {
+                    showToast(`Deleted file "${title}"`);
+                    renderWorkspace();
+                    calculateStorageQuota();
+                };
+            }
+        }
+
+        async function deleteFolder(id, name) {
+            if (confirm(`Delete folder "${name}" and its contents?`)) {
+                const txFolder = db.transaction('folders', 'readwrite');
+                txFolder.objectStore('folders').delete(id);
+
+                txFolder.oncomplete = () => {
+                    showToast(`Folder "${name}" deleted.`);
+                    if (currentFolderId === id) currentFolderId = null;
+                    renderWorkspace();
+                };
+            }
+        }
+
+        // --- UI UTILITIES ---
+        function setCategoryFilter(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.nav-filter').forEach(btn => {
+                btn.classList.remove('bg-slate-800', 'text-neonCyan');
+            });
+            const activeBtn = document.querySelector(`.nav-filter[data-cat="${cat}"]`);
+            if (activeBtn) activeBtn.classList.add('bg-slate-800', 'text-neonCyan');
+            renderWorkspace();
+        }
+
+        function toggleViewMode(mode) {
+            viewMode = mode;
+            const btnGrid = document.getElementById('btnViewGrid');
+            const btnList = document.getElementById('btnViewList');
+
+            if (mode === 'grid') {
+                btnGrid.className = 'p-2.5 glass rounded-xl text-neonCyan border-neonCyan/50';
+                btnList.className = 'p-2.5 glass rounded-xl text-slate-400 border-slate-800';
+            } else {
+                btnList.className = 'p-2.5 glass rounded-xl text-neonCyan border-neonCyan/50';
+                btnGrid.className = 'p-2.5 glass rounded-xl text-slate-400 border-slate-800';
+            }
+            renderWorkspace();
+        }
+
+        async function calculateStorageQuota() {
+            if (navigator.storage && navigator.storage.estimate) {
+                const estimate = await navigator.storage.estimate();
+                const used = estimate.usage || 0;
+                const total = estimate.quota || 0;
+                const pct = Math.min(100, Math.round((used / total) * 100));
+
+                document.getElementById('storageBar').style.width = `${Math.max(2, pct)}%`;
+                document.getElementById('storagePctText').innerText = `${pct}%`;
+                document.getElementById('storageDetails').innerText = `${formatBytes(used)} used of ${formatBytes(total)}`;
+            }
+        }
+
+        function formatBytes(bytes) {
+            if (!bytes || bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function escapeHtml(str) {
+            return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        function toggleModal(id) {
+            document.getElementById(id).classList.toggle('hidden');
+        }
+
+        function showToast(msg, isError = false) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            const toastIcon = document.getElementById('toastIcon');
+
+            toastMsg.innerText = msg;
+            if (isError) {
+                toast.classList.remove('border-neonCyan');
+                toast.classList.add('border-accentRed');
+                toastIcon.className = 'fa-solid fa-circle-exclamation text-accentRed text-base';
+            } else {
+                toast.classList.remove('border-accentRed');
+                toast.classList.add('border-neonCyan');
+                toastIcon.className = 'fa-solid fa-circle-check text-neonCyan text-base';
+            }
+
+            toast.classList.remove('translate-x-80');
+            setTimeout(() => {
+                toast.classList.add('translate-x-80');
+            }, 3000);
+        }
+
+        // App Initialization
+        window.onload = async () => {
+            await initDB();
+            renderUserBadge();
+            renderWorkspace();
+            calculateStorageQuota();
+        };
+    </script>
+</body>
+</html>
